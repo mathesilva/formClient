@@ -1,0 +1,522 @@
+{
+  "name": "FormClient",
+  "nodes": [
+    {
+      "parameters": {
+        "formTitle": "Cliente Onboarding",
+        "formDescription": "Preencha os detalhes abaixo!",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Nome",
+              "placeholder": "Seu nome ?",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "email ",
+              "placeholder": "Seu e-mail ?",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Telefone",
+              "fieldType": "number",
+              "placeholder": "Seu telefone ?",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "O ramo do seu negócio ?",
+              "placeholder": "Sua empresa",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Quais as cores que representam seu negócio ?",
+              "placeholder": "sua identidade ",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Oque você busca em nossa empresa ?",
+              "placeholder": "Como podemos ajudar ?",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Quanto você fatura por mês atualmente ?",
+              "fieldType": "number",
+              "placeholder": "ex.: 20.000",
+              "requiredField": true
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.2,
+      "position": [
+        120,
+        160
+      ],
+      "id": "8aca9abe-5e4d-47c5-a86f-98dbc09f27bc",
+      "name": "On form submission",
+      "webhookId": "dbd30f0a-8165-4d7c-b4f0-0d8b5774ada6"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Você pode me ajudar a criar um e-mail de boas-vindas para um novo cliente com base nos dados dele? Queremos que o e-mail seja conciso, amigável e profissional. Ele também deve ser personalizado com base no setor do cliente e nos seus objetivos ao trabalhar conosco, mostrando o quao pode ser lucrativo estar com a nossa agencia de automação com IA.\n \nInformações do Cliente:\nNome: {{ $json.Nome }}\n\nemail: {{ $json[\"email \"] }}\n\nSeu negócio: {{ $json['O ramo do seu negócio ?'] }}\n\nDetalhes do e-mail:\n\nAssunto: O assunto do e-mail.\nCorpo: O corpo do e-mail.\nEmail: {{ $json[\"email \"] }}\n\nCertifique-se de que o e-mail seja assinado por \"Matheus Faias\", CEO da Agência de IA da fAIaxx Corp. Nunca use marcadores de posição como \"[Seu Nome]\" ou \"[Suas Informações de Contato]\" na assinatura se esses dados não estiverem disponíveis.",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2,
+      "position": [
+        440,
+        0
+      ],
+      "id": "3c0133fa-230a-4ad3-9f57-e3df77d033e0",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4o-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        360,
+        -140
+      ],
+      "id": "efeeab72-e721-40a2-9127-0c3a93de8ecb",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "0HqtqoyaKfAN8sAH",
+          "name": "n8n free OpenAI API credits"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4-turbo",
+          "mode": "list",
+          "cachedResultName": "GPT-4-TURBO"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "Analise a consulta JSON e envie os parâmetros separadamente:\n\nAssunto\nCorpo\nE-mail",
+              "role": "system"
+            },
+            {
+              "content": "= {{ $json.output }} "
+            }
+          ]
+        },
+        "jsonOutput": true,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [
+        800,
+        0
+      ],
+      "id": "41b0e961-9e0b-42aa-b227-6b14ee050d2c",
+      "name": "OpenAI",
+      "credentials": {
+        "openAiApi": {
+          "id": "biNWkRaZDbyrZWsS",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('On form submission').item.json[\"email \"] }}",
+        "subject": "={{ $json.message.content.Assunto }}",
+        "message": "={{ $json.message.content.Corpo }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        1200,
+        0
+      ],
+      "id": "6f459474-f016-4d43-a406-009e1afcc767",
+      "name": "Gmail",
+      "webhookId": "a5834186-17b5-4cfb-9111-40dc1687f2dd",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "jOax2NCUGpxaGZNl",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Pegue as informações do cliente fornecidas e crie um resumo do perfil dele. Aqui estão as informações do cliente:\n\nNome: {{ $json.Nome }}\nSetor da empresa: {{ $json[\"O ramo do seu negócio ?\"] }}\nFaturamento: {{ $json[\"Quanto você fatura por mês atualmente ?\"] }}\n\n\nInforme os seguintes parâmetros separadamente:\nNome:\nemail:\nResumo: Resumo do cliente com base nas informações.",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2,
+      "position": [
+        420,
+        340
+      ],
+      "id": "7b6adf92-6328-44f3-8963-dab6a3d94c71",
+      "name": "AI Agent1"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4o-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        400,
+        240
+      ],
+      "id": "8fa7a1c1-78c1-4d7d-8064-b56e36692927",
+      "name": "OpenAI Chat Model1",
+      "credentials": {
+        "openAiApi": {
+          "id": "biNWkRaZDbyrZWsS",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-3.5-turbo",
+          "mode": "list",
+          "cachedResultName": "GPT-3.5-TURBO"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "Analise a consulta JSON em 3 campos separados:\n- Nome\n- Corpo\n- Resumo",
+              "role": "system"
+            },
+            {
+              "content": "={{ $json.output }}"
+            }
+          ]
+        },
+        "jsonOutput": true,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [
+        800,
+        340
+      ],
+      "id": "0f879850-0fc5-4d99-a7af-2a1facd99ca2",
+      "name": "OpenAI1",
+      "credentials": {
+        "openAiApi": {
+          "id": "biNWkRaZDbyrZWsS",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1vHTgKTbOlb9xRDDWfUVSnmczXFNnIeZGsUUJ_amhZMQ",
+          "mode": "list",
+          "cachedResultName": "Clientes INFOS",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1vHTgKTbOlb9xRDDWfUVSnmczXFNnIeZGsUUJ_amhZMQ/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Página1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1vHTgKTbOlb9xRDDWfUVSnmczXFNnIeZGsUUJ_amhZMQ/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Nome ",
+              "displayName": "Nome ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Corpo ",
+              "displayName": "Corpo ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Resumo ",
+              "displayName": "Resumo ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "index",
+              "displayName": "index",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "message",
+              "displayName": "message",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "logprobs",
+              "displayName": "logprobs",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "finish_reason",
+              "displayName": "finish_reason",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Nome",
+              "displayName": "Nome",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Corpo",
+              "displayName": "Corpo",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Resumo",
+              "displayName": "Resumo",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [
+        1420,
+        340
+      ],
+      "id": "7fdeb946-91b7-40b7-a309-ba6a70e47379",
+      "name": "Google Sheets",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "4UNqw415EJb0N6tT",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "a8a32641-66dc-4f75-995b-b155dca4c461",
+              "name": "Nome",
+              "value": "={{ $json.message.content.Nome }}",
+              "type": "string"
+            },
+            {
+              "id": "d5ef03d1-3206-4cc6-8dd1-a3c644c77fa4",
+              "name": "Corpo",
+              "value": "={{ $json.message.content.Corpo }}",
+              "type": "string"
+            },
+            {
+              "id": "12326e5e-9769-45bd-a158-2eb76d5f693d",
+              "name": "Resumo",
+              "value": "={{ $json.message.content.Resumo }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1160,
+        340
+      ],
+      "id": "543679f1-30a0-43b9-bc72-5e4af21eb0d2",
+      "name": "Edit Fields"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "On form submission": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "AI Agent1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "OpenAI",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI": {
+      "main": [
+        [
+          {
+            "node": "Gmail",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent1": {
+      "main": [
+        [
+          {
+            "node": "OpenAI1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI1": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Google Sheets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "10946eca-d3f3-40e3-bdb7-ed72dc00f551",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "12f9b44916f20d988863b96334a977a66c0d5fa59ebb378b8ec79b2942e4e65b"
+  },
+  "id": "jvPF2iJ8QYRczlkI",
+  "tags": []
+}
