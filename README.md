@@ -33,7 +33,9 @@ O link do Webhook para o formulário.
 Teste enviando uma submissão de formulário (pode usar o Google Forms, Typeform, etc).
 
 
-🇺🇸 Description
+US Description
+
+
 This repository contains an n8n workflow that automates the following process:
 
 Receives customer data via a form (HTTP Webhook).
